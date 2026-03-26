@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LK Insight</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a2e;
+            color: #eee;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            font-size: 24px;
+            color: #00d4ff;
+        }
+
+        #container {
+            width: 600px;
+            background: #16213e;
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        #chat-box {
+            height: 400px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding: 10px;
+            background: #0f3460;
+            border-radius: 8px;
+        }
+
+        .message {
+            padding: 10px 14px;
+            border-radius: 8px;
+            max-width: 80%;
+            line-height: 1.5;
+            font-size: 14px;
+        }
+
+        .user {
+            background: #00d4ff;
+            color: #000;
+            align-self: flex-end;
+        }
+
+        .assistant {
+            background: #1a1a2e;
+            color: #eee;
+            align-self: flex-start;
+        }
+
+        #scrape-section {
+            display: flex;
+            gap: 8px;
+        }
+
+        #scrape-input {
+            flex: 1;
+            padding: 10px;
+            border-radius: 8px;
+            border: none;
+            background: #0f3460;
+            color: #eee;
+            font-size: 14px;
+        }
+
+        #chat-section {
+            display: flex;
+            gap: 8px;
+        }
+
+        #chat-input {
+            flex: 1;
+            padding: 10px;
+            border-radius: 8px;
+            border: none;
+            background: #0f3460;
+            color: #eee;
+            font-size: 14px;
+        }
+
+        button {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 8px;
+            background: #00d4ff;
+            color: #000;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        button:hover {
+            background: #00b8d9;
+        }
+
+        #status {
+            font-size: 12px;
+            color: #aaa;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>LK Insight</h1>
+    <div id="container">
+        <div id="scrape-section">
+            <input id="scrape-input" type="text" placeholder="Enter a .lk or .com.lk URL to scrape..." />
+            <button onclick="scrapeURL()">Scrape</button>
+        </div>
+        <div id="chat-box"></div>
+        <div id="chat-section">
+            <input id="chat-input" type="text" placeholder="Ask something..." onkeydown="if(event.key==='Enter') sendMessage()" />
+            <button onclick="sendMessage()">Send</button>
+        </div>
+        <div id="status"></div>
+    </div>
+
+    <script>
+        const API = "http://127.0.0.1:8000";
+        const USER_ID = "user_001";
+
+        function addMessage(text, role) {
+            const box = document.getElementById("chat-box");
+            const msg = document.createElement("div");
+            msg.className = `message ${role}`;
+            msg.innerText = text;
+            box.appendChild(msg);
+            box.scrollTop = box.scrollHeight;
+        }
+
+        function setStatus(text) {
+            document.getElementById("status").innerText = text;
+        }
+
+        async function scrapeURL() {
+            const url = document.getElementById("scrape-input").value.trim();
+            if (!url) return;
+
+            setStatus("Scraping... this may take a minute.");
+            try {
+                const res = await fetch(`${API}/scrape`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ url })
+                });
+                const data = await res.json();
+                if (data.status === "success") {
+                    setStatus(`Scraped: ${data.data.company_name}`);
+                    addMessage(`Scraped ${data.data.company_name} successfully.`, "assistant");
+                } else {
+                    setStatus("Scrape failed: " + data.message);
+                }
+            } catch (err) {
+                setStatus("Error: " + err.message);
+            }
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById("chat-input");
+            const message = input.value.trim();
+            if (!message) return;
+
+            addMessage(message, "user");
+            input.value = "";
+            setStatus("Thinking...");
+
+            try {
+                const res = await fetch(`${API}/chat`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ user_id: USER_ID, message })
+                });
+                const data = await res.json();
+                addMessage(data.response, "assistant");
+                setStatus("");
+            } catch (err) {
+                setStatus("Error: " + err.message);
+                addMessage("Something went wrong.", "assistant");
+            }
+        }
+    </script>
+</body>
+</html>
