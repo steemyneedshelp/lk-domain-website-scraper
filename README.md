@@ -51,6 +51,7 @@ A local, fully offline business intelligence tool for Sri Lankan websites. You g
 
 ### What's Next
 
+- Benchmarking alternative local models and exploring optional API-based LLM support
 - Improved UI/UX
 - Address extraction improvements
 - Products/services noise filtering
