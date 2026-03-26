@@ -1,4 +1,4 @@
-echo "chroma_db/" >> .gitignore
-echo "mem0_db/" >> .gitignore
-echo "__pycache__/" >> .gitignore
-echo "*.pyc" >> .gitignore
+chroma_db/
+mem0_db/
+__pycache__/
+*.pyc
